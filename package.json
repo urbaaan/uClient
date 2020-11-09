@@ -1,0 +1,58 @@
+{
+  "name": "uclient",
+  "version": "0.4.88",
+  "description": "Venge.io Client",
+  "main": "main.js",
+  "author": "Urban",
+  "repository": "https://github.com/VengeUrban/uClient",
+  "scripts": {
+    "start": "electron . ",
+    "postinstall": "install-app-deps",
+    "dist": "electron-builder"
+  },
+  "license": "GPL-2.0",
+  "build": {
+    "appId": "org.electron.uClient",
+    "asar": true,
+    "productName": "uClient",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/logo.png",
+      "publish": [
+        {
+          "provider": "github",
+          "url": "https://github.com/VengeUrban/uClient/releases"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "license": "",
+      "artifactName": "uClient-win-setup.${ext}",
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": true,
+      "runAfterFinish": true,
+      "shortcutName": "uClient",
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": "deb"
+    },
+    "deb": {}
+  },
+  "dependencies": {
+    "discord-rpc": "^3.1.4",
+    "electron-localshortcut": "^3.2.1",
+    "electron-log": "^4.2.4",
+    "electron-prompt": "^1.6.0",
+    "electron-store": "^6.0.1",
+    "electron-updater": "^4.3.5",
+    "v8-compile-cache": "^2.1.1"
+  },
+  "devDependencies": {
+    "electron": "^10",
+    "electron-builder": "^22.0.0"
+  }
+}
