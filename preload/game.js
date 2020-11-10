@@ -18,7 +18,7 @@ var utils = {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    ipcRenderer.on('Escape', () => {
+    ipcRenderer.on('ESCAPE', () => {
         document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
         document.exitPointerLock();
     })
@@ -123,9 +123,8 @@ var mode = null;
 var timeLeft = null;
 var currentWeapon = null;
 if (utils.get('endGameMessage') == null) utils.set('endGameMessage', 'GG!');
-if (utils.get('FOV') == 150) utils.set('FOV',120);
 if (utils.get('FOV') == null) utils.set('FOV', 120);
-
+if (utils.get('RES') == null) utils.set('RES', 120);
 const loadGame = () => {
     try {
         if (utils.get('defaultGun') == null) utils.set('defaultGun','Scar');
@@ -134,103 +133,6 @@ const loadGame = () => {
             this.app.fire("Analytics:Event", "Invite", "TriedToStart"),
                 this.send([this.keys.start]),
                 this.app.fire("Analytics:Event", "Invite", "Start")
-        }
-
-        //Set higher resolution and better FOV.
-        Settings.prototype.setSettings = function() {
-            var t = this.getSetting("Sensivity");
-            t > 0 && (pc.settings.sensivity = t / 100);
-            var e = this.getSetting("ADSSensivity");
-            e > 0 && (pc.settings.adsSensivity = e / 100);
-            var i = this.getSetting("FOV");
-            i > 0 && (pc.settings.fov = (parseInt(i) / 100) * 115);
-            var s = this.getSetting("Quality");
-            s > 0 ? (pc.settings.resolution = parseInt(s) / 61,
-                this.app.graphicsDevice.maxPixelRatio = 0.9 * pc.settings.resolution) : "undefined" != typeof mobileAds && pc.isMobile ? this.app.graphicsDevice.maxPixelRatio = 1.5 : this.app.graphicsDevice.maxPixelRatio = .95;
-            var n = parseInt(this.getSetting("Volume"));
-            n > -1 ? (pc.settings.volume = parseInt(n) / 100,
-                pc.app.systems.sound.volume = .25 * pc.settings.volume) : pc.app.systems.sound.volume = .25;
-            var a = this.getSetting("InvertMouse");
-            pc.settings.invertAxis = "true" === a,
-                "true" === this.getSetting("DisableMenuMusic") ? (pc.settings.disableMenuMusic = !0,
-                    this.app.fire("Menu:Music", !1)) : (pc.settings.disableMenuMusic = !1,
-                    this.app.fire("Menu:Music", !0));
-            var p = this.getSetting("FPSCounter");
-            pc.settings.fpsCounter = "true" === p;
-            var r = this.getSetting("DisableSpecialEffects");
-            pc.settings.disableSpecialEffects = "true" === r;
-            var g = this.getSetting("HideChat");
-            pc.settings.hideChat = "true" === g;
-            var o = this.getSetting("HideUsernames");
-            pc.settings.hideUsernames = "true" === o;
-            var c = this.getSetting("HideArms");
-            pc.settings.hideArms = "true" === c,
-                this.app.root.findByTag("KeyBinding").forEach(function(t) {
-                    t.element.text = keyboardMap[pc["KEY_" + t.element.text]]
-                }),
-                this.app.fire("Game:Settings", pc.settings)
-        }
-        //Better graphics fix pt. 2
-        /*
-        Menu.prototype.setProfile = function() {
-            var e = Utils.getItem("Hash");
-            void 0 !== e && (pc.session.hash = e),
-            window.location.href.search("create-account") > -1 && setTimeout(function() {
-                pc.app.fire("Page:Menu", "Account"),
-                setTimeout(function() {
-                    pc.app.fire("Tab:Login", "Create Account")
-                }, 10)
-            }, 50),
-            window.location.href.search("login") > -1 && setTimeout(function() {
-                pc.app.fire("Page:Menu", "Account"),
-                setTimeout(function() {
-                    pc.app.fire("Tab:Login", "Login")
-                }, 10)
-            }, 50)
-        }
-        */
-       
-        //Required solely for Discord RPC.
-        NetworkManager.prototype.mode = function(e) {
-            var t = e[1];
-            e[0] && (this.lastMode = this.currentMode + "",
-            this.currentMode = e[0],
-            mode = e[0],
-            pc.currentMode = this.currentMode,
-            pc.isPrivate = e[2],
-            this.app.fire("Game:Mode", this.currentMode, t)),
-            this.setModeState(this.lastMode, !1),
-            this.setModeState(this.currentMode, !0);
-            var i = this.app.root.findByName("Result");
-            if (i) {
-                var a = this.app.root.findByName("ChatWrapper");
-                a && (a.setLocalPosition(0, 0, 0),
-                a.reparent(this.app.root.findByName("ChatGame"))),
-                i.destroy()
-            }
-            if (this.app.fire("Game:PreStart", !0),
-            this.app.fire("Outline:Restart", !0),
-            pc.currentMap = t,
-            clearTimeout(this.mapTimer),
-            this.mapTimer = setTimeout(function(e) {
-                t ? e.app.fire("Map:Load", t) : e.app.fire("Map:Load", "Sierra")
-            }, 100, this),
-            pc.isFinished = !1,
-            pc.isPauseActive = !1,
-            this.isTeamSelected = !1,
-            this.app.fire("Game:Start", !0),
-            this.app.fire("Player:Lock", !0),
-            "GUNGAME" != pc.currentMode && pc.session && pc.session.weapon && this.app.fire("WeaponManager:Set", pc.session.weapon),
-            setTimeout(function(e) {
-                e.app.fire("DOM:Update", !0)
-            }, 500, this),
-            Date.now() - this.lastGameStart > 1e5) {
-                var r = this;
-                this.app.fire("Player:Hide", !0),
-                this.app.fire("Ads:Preroll", function() {
-                    r.app.fire("Player:Show", !0)
-                })
-            }
         }
 
         //Also required solely for Discord RPC.
@@ -269,8 +171,22 @@ const loadGame = () => {
             if (!this.inputEntity.enabled)
                 return !1;
             var t = this.inputEntity.script.input.getValue();
+
+            //Twitch chat feature here.
+            const tmi = require('tmi.js');
+            const client = new tmi.Client({
+                connection: {
+                    secure: true,
+                    reconnect: true
+                },
+                channels: [channelName]
+            })
+            client.connect();
+            client.on('message', (channel, tags, message, self) => {
+                this.app.fire("Chat:Message",`${tags.username}`,`${message}`);
+            });
             //Input commands here.
-            var f = ['!end', '!def','!gun','!fov','!help'];
+            var f = ['!end', '!def','!gun','!fov','!help','!res'];
             let i = t.split(' ');
             if (t.startsWith('!')) {
                 for (let j = 0; j < f.length; j++) {
@@ -336,6 +252,14 @@ const loadGame = () => {
                                 this.app.fire("Chat:Message", "uClient", `!fov <number> : Sets your FOV to that number.`);
                                 this.app.fire("Chat:Message", "uClient", `!gun <gun name> : Configures your gun for the matches to come.`);
                                 break;
+                            case 5:
+                                try {
+                                    if (i.length == 2){
+                                        utils.set('RES',parseInt(i[1]));
+                                        this.app.fire("Chat:Message", "uClient", `Resolution is now ${i[1]}.`);
+                                    }
+                                }
+                                catch {this.app.fire("Chat:Message", "uClient", `Invalid Syntax.`);}
                         }
                         this.inputEntity.script.input.setValue('');
                         this.blur();
@@ -373,6 +297,7 @@ const loadGame = () => {
                 t.fireNetworkEvent("connected", !0)
             }, 800, this)
         }
+        
         //End Game Message
         Result.prototype.initialize = function() {
             for (var t in this.players = [],
@@ -463,7 +388,9 @@ const loadGame = () => {
         Movement.prototype.update = function(t) {
             this.lastDelta += t,
             this.setCameraAngle(),
+            mode = pc.currentMode,
             currentWeapon = this.currentWeapon.entity.name,
+            pc.settings.resolution = utils.get('RES');
             pc.controls.player.movement.defaultFov = utils.get('FOV');
             this.setKeyboard(),
             this.setGravity(),
