@@ -53,8 +53,6 @@ let gameWindow;
 let menuWindow;
 
 const prompt = require('electron-prompt');
-const { ipcMain } = require('electron/main');
-const { EventEmitter } = require('events');
 function createGameWindow() {
   // Create the browser window.
   //Gets dimensions of the screen.
@@ -71,8 +69,11 @@ function createGameWindow() {
       autoHideMenuBar: true,
       webPreferences: {
           preload: `${__dirname}/preload/game.js`,
-          nodeIntegration: true,
+          nodeIntegration: false,
           enableRemoteModule: true,
+          webSecurity: false,
+          allowRunningInsecureContent: true,
+          devTools: true,
       }
   })
 
@@ -90,25 +91,41 @@ function createGameWindow() {
   webContents.on('will-prevent-unload', (event) => event.preventDefault());
   webContents.on('dom-ready', (event) => {
 
-      if (c == 1){
-        var filter = {
-          urls: ["https://pubads.g.doubleclick.net/*", "https://video-ad-stats.googlesyndication.com/*",
-          "https://simage2.pubmatic.com/AdServer/*",
-          "https://pagead2.googlesyndication.com/*",
-          "https://securepubads.g.doubleclick.net/*",
-          "https://googleads.g.doubleclick.net/*"]
-        };
-       
-        webContents.session.webRequest.onBeforeRequest(filter, function(details, callback) {
-          console.log(details.url);
-          callback({cancel: true});
-        });
-      }
-
       //Bug Fixes.
       webContents.setZoomLevel(0);
       webContents.setZoomFactor(1);
-
+      //Resource Swapper
+  const { readdirSync, mkdir, statSync } = require("fs");
+  const { format } = require("url");
+  
+	let swapFolder = `${app.getPath("documents")}/uClientSwapper`;
+	try { mkdir(swapFolder, { recursive: true }, e => { }); } catch (e) { };
+	let swap = { filter: { urls: [] }, files: {} };
+	const allFilesSync = (dir = swapFolder) => {
+		readdirSync(dir).forEach(file => {
+			const filePath = `${dir}/${file}`;
+			if (statSync(filePath).isDirectory()) {
+				if (!(/\\(docs)$/.test(filePath)))
+					allFilesSync(filePath);
+			} else {
+				if (!(/\.(html|js)/g.test(file))) {
+					let krunk = `*://venge.io${filePath.replace(swapFolder, '').replace(/\\/g, '/')}*`
+					swap.filter.urls.push(krunk);
+					swap.files[krunk.replace(/\*/g, '')] = format({
+						pathname: filePath,
+						protocol: 'file:',
+						slashes: true
+					});
+				}
+			}
+		});
+	};
+    allFilesSync(swapFolder);
+	if (swap.filter.urls.length) {
+		webContents.session.webRequest.onBeforeRequest(swap.filter, (details, callback) => {
+			callback({ cancel: false, redirectURL: swap.files[details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)beta./gi, '')] || details.url });
+		});
+	}
       gameWindow.setTitle(`uClient V${app.getVersion()}`);
       event.preventDefault();
   })
@@ -162,8 +179,7 @@ function createGameWindow() {
       webContents.send('ESCAPE');
   })
   shortcut.register('F11', () => {
-      let focusedWindow = BrowserWindow.getFocusedWindow();
-      focusedWindow.setSimpleFullScreen(!focusedWindow.isSimpleFullScreen());
+      gameWindow.setSimpleFullScreen(!gameWindow.isSimpleFullScreen());
   })
   shortcut.register('F12', () => {
       webContents.openDevTools();
