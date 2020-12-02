@@ -1,192 +1,219 @@
-require('v8-compile-cache');
-
 const {
     ipcRenderer
-} = require('electron');
-
-const Store = require('electron-store');
-const config = new Store();
-
-var utils = {
-    get: function(str) {
-            return config.get(str);
-        },
-        set: function(str, val) {
-            return config.set(str, val);
-        }
-}
-
-
+} = require("electron");
 document.addEventListener('DOMContentLoaded', () => {
-    ipcRenderer.on('ESCAPE', () => {
-        document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-        document.exitPointerLock();
-    })
-    const RPC = require('discord-rpc');
-    const ClientRPC = new RPC.Client({
-        transport: "ipc",
-    });
 
-    function login() {
-        try {
-            ClientRPC.login({
-                clientId: "769550318148780115",
-            });
-        } catch {
-            login();
+    var username = null;
+    var mode = null;
+    var timeLeft = null;
+    var currentWeapon = null;
+
+    async function getGameVariable(val) {
+        while (!window.hasOwnProperty(val)) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
-    }
+    };
 
-    login()
-
-    ClientRPC.on('ready', () => {
-        const date = Date.now();
-        const matchDate = new Date();
-        setInterval(() => {
-            updateRPC();
-        }, 3e3);
-
-
-        function updateRPC() {
-            let ign;
-            let timeRemaining;
-
-            if (timeLeft != null) {
-                let tokens = timeLeft.split(':');
-                timeLeft = parseInt(tokens[0]) * 60 + parseInt(tokens[1]);
-                timeRemaining = matchDate.setTime(Date.now() + timeLeft * 1000);
-            } else timeRemaining = date;
-
-            if (username != null) {
-                let e = username.split('[/color]]');
-                let i = username.split('[[color');
-                if (i.length > 1) {
-                    let a = i[1].split('[/color]]');
-                    let b = a[0].split(']');
-                    ign = `[${b[1]}] ${e[1]}`;
-                } else ign = `${e[0]}`
-            } else {
-                ign = `uClient`;
-            }
-
-            //Gets the type of URL.
-            if (getURLType() == 'Playing a Match') {
-                if (mode != null) {
-                    let e = mode.slice(1);
-                    e = e.toLowerCase();
-                    let a = mode.slice(0, 1);
-                    update(`Playing ${a}${e}`);
-                } else {
-                    update(`In Menu`);
-                }
-            } else update(getURLType());
-
-            function update(msg) {
-                if (msg.includes('Playing') == true) {
-                    ClientRPC.setActivity({
-                        largeImageKey: "logo",
-                        largeImageText: `${ign}`,
-                        smallImageKey: `${currentWeapon.toLowerCase()}`,
-                        smallImageText: `${currentWeapon}`,
-                        endTimestamp: timeRemaining,
-                        details: `${msg}`,
-                    })
-                } else {
-                    ClientRPC.setActivity({
-                        largeImageKey: "logo",
-                        largeImageText: `${ign}`,
-                        details: `${msg}`,
-                    })
+    getGameVariable("Menu").then(() => {
+        //Slider.
+        new MutationObserver(() => {
+            const input = document.getElementsByTagName("input");
+            var b = 0;
+            for (let a = 0; a < input.length; a++) {
+                if (input[a].type == 'range') {
+                    b++;
+                    if (b == 3) {
+                        input[a].max = 140;
+                        input[a].value = pc.settings.fov;
+                    }
+                    if (b == 4) {
+                        input[a].max = 110;
+                        input[a].value = pc.settings.resolution * 100;
+                    }
                 }
             }
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        })
 
-            function getURLType() {
-                const url = window.location.href;
-                if (url.includes('social.venge.io') == true) return 'Browsing Socials';
-                let t = url.split('#');
-                if (t.length < 2) return 'In Menu';
-                else {
-                    let u = t[t.length - 1];
-                    if (u.length > 1) {
-                        let i = u.split(':');
-                        if (i.length > 1 && i[0] == 'Spectate') return 'Spectating a Match';
-                        else return 'Playing a Match';
-                    } else return 'Searching for a Match'
-                }
-            }
+        //End-Game Message.
+        var isMatchEnd = 0;
+        if (Utils.getItem('endGameMessage') == null || Utils.getItem('endGameMessage') == "null") Utils.setItem('endGameMessage', 'GG!');
+        Utils.setItem('locationHref', 'https://google.com');
+
+        //Ping
+        Overlay.prototype.setPing = function(t) {
+            this.ping = t;
         }
-    })
-})
 
-var username = null;
-var mode = null;
-var timeLeft = null;
-var currentWeapon = null;
-if (utils.get('endGameMessage') == null) utils.set('endGameMessage', 'GG!');
-if (utils.get('FOV') == null) utils.set('FOV', 120);
-if (utils.get('RES') == null) utils.set('RES', 120);
-const loadGame = () => {
-    try {
-        if (utils.get('defaultGun') == null) utils.set('defaultGun','Scar');
-        //Join solo game.
         RoomManager.prototype.onStart = function() {
             this.app.fire("Analytics:Event", "Invite", "TriedToStart"),
                 this.send([this.keys.start]),
                 this.app.fire("Analytics:Event", "Invite", "Start")
         }
 
-        //Also required solely for Discord RPC.
-        Menu.prototype.onProfileData = function(e) {
-            if (this.isMatchFound)
-                return !1;
-            if (e && (pc.session.hash = e.hash,
-                pc.session.username = e.username,
-                username = e.username,
-                Utils.setItem("Hash", e.hash),
-                e.username && this.miniProfileEntity && this.miniProfileEntity.element)) {
-                var t = this.miniProfileEntity.findByName("Username").element.width;
-                this.miniProfileEntity.element.width = 355 + t
+        check();
+
+
+        function check(){
+            if (Utils.getItem("locationHref") != window.location.href){
+                doThings();
+                Utils.setItem("locationHref", window.location.href);
+            }
+            console.log(Utils.getItem("locationHref"));
+            setTimeout(() => {
+                check();
+            }, 500);
+        }
+    
+
+        function doThings() {
+            RPC();
+
+            function RPC() {
+                try {
+                    try {
+                        if (typeof pc.session.username == "string") username = Utils.cleanUsername(pc.session.username);
+                        if (typeof pc.currentMode != "undefined") mode = "Playing " + pc.currentMode.charAt(0) + pc.currentMode.toLowerCase().substring(1);
+                        if (typeof pc.controls.player.movement.currentWeapon.entity.name != "undefined") currentWeapon = pc.controls.player.movement.currentWeapon.entity.name;
+                        if (typeof pc.controls.interfaceEntity.script.overlay.timeEntity.element.text != "undefined") timeLeft = pc.controls.interfaceEntity.script.overlay.timeEntity.element.text;
+
+                    } catch {}
+                
+                    if (window.location.href.substring("https://venge.io".length).length < 3) {
+                        if (pc.app.scene.root.findByGuid("e0850441-d29d-4e62-ae27-b1853130faec").element.text == "uClient") return;
+                        pc.app.scene.root.findByName("Twitch").element.entity.setLocalPosition(-520, -257, 0);
+                        pc.app.scene.root.findByName("Challenges").element.entity.setLocalScale(0.7, 0.7, 0);
+                        pc.app.scene.root.findByName("Challenges").element.entity.setLocalPosition(-175, 110.1, 0);
+                        pc.app.scene.root.findByName("Twitch").element.entity.setLocalScale(1.2, 1.2, 1.2);
+                        pc.app.scene.root.findByName("Twitter").enabled = false;
+                        pc.app.scene.root.findByGuid("2baa7f22-cb28-4cbb-a175-55b8d4385c6f").enabled = false;
+                        pc.app.scene.root.findByName("Poki").enabled = false;
+                        pc.app.scene.root.findByGuid("63e2718e-ce1c-489c-add7-988b7a0d1d75").enabled = false;
+                        pc.app.scene.root.findByGuid("019bfc08-7caa-49fe-a4b1-681dc7060a80").setLocalPosition(175, 2, 1);
+                        pc.app.scene.root.findByGuid("72fadb2f-bcce-4848-9c17-f66bfce97edf").setLocalPosition(115, 2, 1);
+                        pc.app.scene.root.findByGuid("e0850441-d29d-4e62-ae27-b1853130faec").setLocalPosition(100, -32, 0);
+                        pc.app.scene.root.findByGuid("e0850441-d29d-4e62-ae27-b1853130faec").element.text = "uClient";
+                        pc.app.scene.root.findByGuid("e0850441-d29d-4e62-ae27-b1853130faec").setLocalScale(1.3, 1.3, 1.3);
+                        pc.app.scene.root.findByGuid("a8864f8b-ae61-470d-99b2-91800ab9c798").element.color = {
+                            r: 0.3882352941,
+                            g: 0,
+                            b: 0.72941176
+                        };
+                        pc.app.scene.root.findByGuid("c41b84e4-2613-4f4d-8c4a-7d1c6c26c560").element.color = {
+                            r: 0.3882352941,
+                            g: 0,
+                            b: 0.72941176
+                        };
+                        pc.app.scene.root.findByGuid("ed3526e2-16ff-4fa9-a9a5-2dd5908e842e").element.color = {
+                            r: 0.3882352941,
+                            g: 0,
+                            b: 0.72941176
+                        };
+                        pc.app.scene.root.findByGuid("6be3609e-10d3-47d3-afd6-31c88ddf1616").element.color = {
+                            r: 0.3882352941,
+                            g: 0,
+                            b: 0.72941176
+                        };
+                    } else {
+
+                        //Auto Back-to-Menu
+                        if (typeof pc.controls.interfaceEntity.script.overlay.infoEntity.enabled == "boolean") {
+                            if (pc.controls.interfaceEntity.script.overlay.infoEntity.enabled == true) {
+                                window.location.href = "https://venge.io";
+                            }
+                        }
+                        if (typeof pc.isFinished == "boolean") {
+                            if (pc.isFinished == true) {
+                                if (isMatchEnd == 0) {
+                                    isMatchEnd++;
+                                    pc.app.fire("Network:Chat", Utils.getItem('endGameMessage'));
+                                }
+                            } else isMatchEnd = 0;
+                        }
+                        if (pc.app.scenes._app.lightmapper.root.children[1].children[0].light.intensity == 0) return;
+                        if (typeof pc.currentMode == "string") {
+                                pc.app.scene.exposure = 6;
+                                pc.app.scenes._app.lightmapper.root.children[1].children[0].light.vsmBlurSize = 0;
+                                pc.app.scenes._app.lightmapper.root.children[1].children[0].light.intensity = 0;
+                            }
+                            if (typeof pc.controls.player.entity.children[0].children[4] != "undefined") {
+                                pc.controls.player.entity.children[0].children[4].setLocalPosition(0.5, 0.58, -0.80);
+                            }
+                        }
+                        if (typeof guidElement("2885c322-8cea-4b70-b591-89266a1bb5a0") != "undefined") {
+                            guidElement("2885c322-8cea-4b70-b591-89266a1bb5a0").element.color = {
+                                r: 0.51764705,
+                                g: 0.06274509,
+                                b: 0.91372549
+                            };
+                            guidElement("2885c322-8cea-4b70-b591-89266a1bb5a0").setLocalScale(1.5, 1.5, 1.5);
+                            guidElement("2885c322-8cea-4b70-b591-89266a1bb5a0").setLocalPosition(5.000009536743164, -5.0001983642578125, 0);
+                        }
+                        if (typeof guidElement("25aee198-fae3-4780-a2de-f68fce9bafd8") != "undefined") {
+                            guidElement("25aee198-fae3-4780-a2de-f68fce9bafd8").element.color = {
+                                r: 0.866666666667,
+                                g: 0.55294117,
+                                b: 1
+                            };
+                        }
+                       
+                        if (typeof pc.colors != "undefined") {
+                            pc.colors.health = {
+                                r: 0.97254901,
+                                g: 0.7764705882,
+                                b: 1
+                            };
+                        }
+                        if (typeof guidElement("ebebda7a-5ed8-4895-841d-73c2b1ab560b") != "undefined") {
+                            guidElement("ebebda7a-5ed8-4895-841d-73c2b1ab560b").element.opacity = 0.1;
+                        }
+                        
+                        var guid = ["daa5691e-0518-4bd2-bc17-313828af5bb2","f8763836-19f6-44e6-8682-8da05cc064b6","9371241a-4fac-4a23-bf29-343c0f0fedd6","808a452e-7d73-433a-b91e-91d6e1c51286","df20128a-9f30-4da8-933c-f217ebbfbc88","a79a0e7c-adb3-44b3-bd25-19ddc6b1161d","6501a7fd-23ea-4b35-b634-35a95f09280d","09e900aa-538b-4a7c-ab45-4de687bebd25"];
+                        for (let a = 0; a < guid.length; a++) {
+                            if (typeof guidElement(guid[a]) != "undefined") {
+                                guidElement(guid[a]).element.color = {
+                                    r: 0.97254901,
+                                    g: 0.7764705882,
+                                    b: 1
+                                }
+                            }
+                            else continue;
+                        }
+                        function guidElement(guid){
+                            if (typeof pc.controls.interfaceEntity.findByGuid(guid) != "undefined") return pc.controls.interfaceEntity.findByGuid(guid);
+                        }
+                     
+                   
+
+
+                } catch {
+                    setTimeout(() => {
+                        doThings()
+                    }, 200);
+                }
+                
+            ipcRenderer.send("RPC", mode, username, currentWeapon, timeLeft);
             }
         }
+    })
 
-        //Also meant for Discord RPC.
-        Overlay.prototype.onTick = function(t, e) {
-            this.isOvertime ? (this.timeEntity.element.text = t,
-                    timeLeft = t,
-                    this.timeEntity.element.color = pc.colors.health,
-                    this.timeEntity.element.fontSize = 35) : (this.timeEntity.element.text = Utils.mmss(e),
-                    timeLeft = Utils.mmss(e),
-                    this.timeEntity.element.color = pc.colors.white,
-                    this.timeEntity.element.fontSize = 25),
-                t < 0 && !pc.isFinished ? (this.alreadyStarted.enabled = !0,
-                    this.alreadyStartedCount.element.text = 20 + t) : this.alreadyStarted.enabled = !1,
-                t >= 0 && t <= 5 ? (this.countBackEntity.enabled = !0,
-                    this.countBackEntity.element.text = t,
-                    this.entity.sound.play("Count")) : (this.countBackEntity.enabled = !1,
-                    this.isOvertime && !pc.isFinished && this.entity.sound.play("Overtime-Count"))
-        }
+    getGameVariable("Chat").then(() => {
+        ipcRenderer.on('setEndGameMessage', (event, message) => {
+            console.log(message);
+            Utils.setItem('endGameMessage', message);
+            if (window.location.href.substring("https://venge.io".length).length < 3) pc.app.fire("Alert:Menu", `End-game Message has been set to '${message}'`);
+            else pc.app.fire("Chat:Message", "uClient", `End-game message has been switched to '${message}'`);
 
-        //Chat feature
+        });
+
         Chat.prototype.sendMessage = function() {
             if (!this.inputEntity.enabled)
                 return !1;
             var t = this.inputEntity.script.input.getValue();
-
-            //Twitch chat feature here.
-            const tmi = require('tmi.js');
-            const client = new tmi.Client({
-                connection: {
-                    secure: true,
-                    reconnect: true
-                },
-                channels: [channelName]
-            })
-            client.connect();
-            client.on('message', (channel, tags, message, self) => {
-                this.app.fire("Chat:Message",`${tags.username}`,`${message}`);
-            });
             //Input commands here.
-            var f = ['!end', '!def','!gun','!fov','!help','!res'];
+            var f = ['!end', '!def', '!help'];
             let i = t.split(' ');
             if (t.startsWith('!')) {
                 for (let j = 0; j < f.length; j++) {
@@ -199,74 +226,26 @@ const loadGame = () => {
                                     for (let a = 1; a < i.length; a++) {
                                         list.push(i[a]);
                                     }
-                                    utils.set('endGameMessage', list.join(' '));
-                                    this.app.fire("Chat:Message", "uClient", `End-game message has been switched to '${utils.get('endGameMessage')}'`);
+                                    Utils.setItem('endGameMessage', list.join(' '));
+                                    this.app.fire("Chat:Message", "uClient", `End-game message has been switched to '${Utils.getItem('endGameMessage')}'`);
                                 } else {
                                     this.app.fire("Chat:Message", "uClient", `Invalid Syntax: Missing Variable after '${i[0]}'`);
                                 }
                                 break;
                             case 1:
-                                this.app.fire("Chat:Message", "uClient", `End-game message is '${utils.get('endGameMessage')}'`);
+                                this.app.fire("Chat:Message", "uClient", `End-game message is '${Utils.getItem('endGameMessage')}'`);
                                 break;
                             case 2:
-                                if (i.length == 2){
-                                    let k = i[1].slice(1);
-                                    k = k.toLowerCase();
-                                    let l = i[1].slice(0,1);
-                                    l = l.toUpperCase();
-                                    let guns = ['Scar','Shotgun','Sniper','Tec-9'];
-                                    for (let v = 0; v < guns.length; v++){
-                                        if (`${l}${k}` == guns[v]) {
-                                            utils.set('defaultGun',guns[v]);
-                                            this.app.fire("Chat:Message", "uClient", `Gun that will be used next round is '${guns[v]}'`);
-                                            this.inputEntity.script.input.setValue('');
-                                            this.blur();
-                                            return;
-                                        }
-                                    }
-                                    this.app.fire("Chat:Message", "uClient", `Invalid Gun Choice.`);
-                                }
-                                else {
-                                    this.app.fire("Chat:Message", "uClient", `Invalid Syntax.`);
-                                }
-                                break;
-                            case 3:
-                                if (i.length == 2){
-                                    try {
-                                        utils.set('FOV',parseInt(i[1]));
-                                        this.app.fire("Chat:Message", "uClient", `FOV is now ${i[1]}.`);
-                                    }
-                                    catch {
-                                        this.app.fire("Chat:Message", "uClient", `Invalid Syntax.`);
-                                    }
-                                }
-                                else {
-                                    this.app.fire("Chat:Message", "uClient", `Invalid Syntax.`);
-                                }
-                                break;
-                            case 4:
                                 this.app.fire("Chat:Message", "uClient", `Below are the list of commands:`);
-                                this.app.fire("Chat:Message", "uClient", `!def : Shows your end-game message.`);
                                 this.app.fire("Chat:Message", "uClient", `!help : This command.`);
-                                this.app.fire("Chat:Message", "uClient", `!end <msg> : Sets your end-game message. Default message is 'GGWP!'`);
-                                this.app.fire("Chat:Message", "uClient", `!fov <number> : Sets your FOV to that number.`);
-                                this.app.fire("Chat:Message", "uClient", `!gun <gun name> : Configures your gun for the matches to come.`);
+                                this.app.fire("Chat:Message", "uClient", `!end <msg> : Sets your end-game message. Default message is 'GG!'`);
                                 break;
-                            case 5:
-                                try {
-                                    if (i.length == 2){
-                                        utils.set('RES',parseInt(i[1]));
-                                        this.app.fire("Chat:Message", "uClient", `Resolution is now ${i[1]}.`);
-                                    }
-                                }
-                                catch {this.app.fire("Chat:Message", "uClient", `Invalid Syntax.`);}
                         }
                         this.inputEntity.script.input.setValue('');
                         this.blur();
                     }
                 }
-            }
-            else {
+            } else {
                 if (t.length <= 0)
                     return !1;
                 if (t.startsWith(' ')) {
@@ -283,143 +262,5 @@ const loadGame = () => {
             }
         }
 
-        //Chooses whatever gun you put as what gun you will start out with next round.
-        Player.prototype.onStart = function() {
-            pc.session && void 0 !== pc.session.character ? this.app.fire("Player:Character", pc.session.character) : this.app.fire("Player:Character", this.characterName),
-            this.movement.setAmmoFull(),
-            this.setWeapon(utils.get('defaultGun'),!1);
-            this.cards = [],
-            this.killCount = 0,
-            this.deathCount = 0,
-            this.app.fire("Digit:KillCount", this.killCount),
-            this.app.fire("Digit:DeathCount", this.deathCount),
-            setTimeout(function(t) {
-                t.fireNetworkEvent("connected", !0)
-            }, 800, this)
-        }
-        
-        //End Game Message
-        Result.prototype.initialize = function() {
-            for (var t in this.players = [],
-            this.rankOpacity = 0,
-            this.mapEntities = [],
-            this.time = this.maxTime,
-            this.tick(),
-            this.rowEntity.enabled = !1,
-            this.resultHolder.enabled = !0,
-            this.scoresEntity.enabled = !1,
-            pc.currentMap && (this.mapNameEntity.element.text = pc.currentMap + ""),
-            !0 === pc.isSpectator ? this.showMessage("OVER") : pc.isVictory ? this.showMessage("VICTORY") : this.showMessage("DEFEAT"),
-            setTimeout(function(t) {
-                t.showScoreTable(pc.stats)
-            }, 3e3, this),
-            this.app.fire("Overlay:Gameplay", !1),
-            this.app.fire("Network:Chat", utils.get('endGameMessage')),
-            this.app.mouse.disablePointerLock(),
-            pc.isFinished = !0,
-            this.app.fire("Player:Lock", !1),
-            this.app.fire("Game:Finish", !0),
-            this.currentSkillIndex = 0,
-            this.skills = [],
-            pc.stats) {
-                var e = pc.stats[t];
-                e.isMe && (this.skills = [{
-                    name: "Experience",
-                    score: e.experience
-                }, {
-                    name: "Bonus XP",
-                    score: e.bonus
-                }, {
-                    name: "Total Experience",
-                    score: e.experience + e.bonus
-                }],
-                this.app.fire("Miniplay:Save", "kills", e.kill),
-                this.app.fire("Miniplay:Save", "deaths", e.death),
-                this.app.fire("Miniplay:Save", "objective_score", e.totalCardPoint),
-                this.app.fire("Miniplay:Save", "assist", e.assist),
-                this.app.fire("Miniplay:Save", "headshot", e.headshot),
-                this.app.fire("Miniplay:Save", "reward", e.reward),
-                this.app.fire("Miniplay:Save", "score", e.score))
-            }
-            this.skillPoints = [],
-            this.voteBar.setLocalScale(.001, 1, 1),
-            pc.isPrivate ? this.skillHolder.enabled = !1 : this.skillHolder.enabled = !0,
-            this.on("state", this.onStateChange, this),
-            this.entity.on("destroy", this.onDestroy, this),
-            this.app.on("Result:Preroll", this.onPreroll, this),
-            this.onStateChange(!0),
-            this.rewardButtonTimer = setTimeout(function(t) {
-                pc.app.fire("Result:DestroyBanner", !0)
-            }, 18e3, this),
-            "undefined" != typeof PokiSDK && PokiSDK.gameplayStop(),
-            this.app.on("Result:Banner", this.setBanner, this),
-            this.app.on("Result:DestroyBanner", this.destroyBanner, this),
-            window.onbeforeunload = !1
-        }
-        Spectator.prototype.initialize = function() {
-            pc.settings || (pc.settings = {}),
-            pc.settings.sensivity || (pc.settings.sensivity = 1),
-            this.targets = [],
-            this.targetIndex = 0,
-            this.sensivity = .1;
-            var t = 1;
-            this.speed = t,
-            this.isZooming = !1,
-            this.zoomOutTween = !1,
-            this.isMouseLocked = !1,
-            this.currentCameraFov = 50,
-            this.currentState = !0,
-            this.lookX = 0,
-            this.lookY = 0,
-            this.targetVector = new pc.Vec3(0,0,0),
-            this.app.mouse.on("mouseup", this.onMouseUp, this),
-            this.app.mouse.on("mousemove", this.onMouseMove, this),
-            this.app.mouse.on("mousedown", this.onMouseDown, this),
-            this.app.mouse.on("mousewheel", this.onMouseWheel, this),
-            document.addEventListener("pointerlockchange", this.setMouseState.bind(this)),
-            window.oncontextmenu = function() {
-                return !1
-            }
-            ,
-            this.app.on("Map:Loaded", this.onMapLoaded, this),
-            this.app.on("Game:PlayerJoin", this.onPlayerJoin, this),
-            this.app.on("Camera:State", this.onCameraState, this)
-        }
-        Movement.prototype.update = function(t) {
-            this.lastDelta += t,
-            this.setCameraAngle(),
-            mode = pc.currentMode,
-            currentWeapon = this.currentWeapon.entity.name,
-            pc.settings.resolution = utils.get('RES');
-            pc.controls.player.movement.defaultFov = utils.get('FOV');
-            this.setKeyboard(),
-            this.setGravity(),
-            this.setMovement(),
-            this.setDamping(t);
-            var e = this.lastDelta;
-            e > pc.dt - .001 && (this.setHandAngle(e),
-            this.setCurrentValues(e),
-            this.setMovementAnimation(e),
-            this.checkGlitches(e),
-            this.setShooting(e),
-            this.isMobile && this.updateAutoLock(),
-            this.timestamp += e,
-            this.lastDelta = 0)
-        }
-        console.log('Everything has been loaded!');
-
-    } catch {
-        window.requestAnimationFrame(loadGame);
-    }
-}
-
-const loadStart = () => {
-    try {
-        let image = document.getElementById('animated-loading-image-1');
-        image.parentElement.removeChild(image);
-        window.requestAnimationFrame(loadGame);
-    } catch {
-        window.requestAnimationFrame(loadStart);
-    }
-}
-window.requestAnimationFrame(loadStart);
+    })
+})
