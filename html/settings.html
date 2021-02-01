@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * {
+	outline: none;
+	font-family: Helvetica, arial, sans-serif;
+	color: #353535;
+	user-select: none;
+}
+
+.lineSpacing {
+	padding-bottom: 10px;
+}
+
+#navTitle {
+	font-size: 25px;
+	color: #fff;
+	z-index: 11;
+  background-color: rgba(0, 0, 0, 0.5);
+	height: 35px;
+}
+
+.switch {
+	float: right;
+  	position: relative;
+  	display: inline-block;
+  	width: 60px;
+  	height: 28px;
+}
+
+.slider {
+	  position: absolute;
+	  cursor: pointer;
+	  top: 0;
+	  left: 0;
+	  right: 0;
+	  bottom: 0;
+	  background-color: #ccc;
+	  -webkit-transition: .4s;
+	  transition: .4s;
+	  border-radius: 20px;
+	}
+
+.slider:before {
+	  position: absolute;
+	  content: "";
+	  height: 20px;
+	  width: 20px;
+	  left: 4px;
+	  bottom: 4px;
+	  background-color: white;
+	  -webkit-transition: .4s;
+	  transition: .4s;
+	  border-radius: 50%;
+}
+
+input:checked + .slider {
+  	background-color: #2196F3;
+}
+
+
+</style>
+
+</head>
+<body>
+
+  <div id="navBar">
+		<div id="navTitle">Miscellaneous</div>
+	</div>
+  <div class='lineSpacing'>
+    <p>* = Requires Restart</p>
+    <br>
+  </div>
+  <div class='lineSpacing'>
+    <p>Enable Frame Rate Limit Cap*</p>
+    <label class="switch" >
+      <input id="FPS_Switch" type="checkbox" href='javascript:;' onclick="toggle_FPS_Cap()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+
+  <div class='lineSpacing'>
+    <p>Enable Discord RPC*</p>
+    <label class="switch" >
+      <input id="RPC_Switch" type="checkbox" href='javascript:;' onclick="toggle_RPC()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+
+  <div class='lineSpacing'><br>
+    <div id="navBar">
+      <div id="navTitle">Game</div>
+    </div>
+  </div>
+  
+  <div class='lineSpacing'>
+    <p>Enable Hitmarkers</p>
+    <label class="switch" >
+      <input id="HitMarkers_Switch" type="checkbox" href='javascript:;' onclick="toggle_HitMarkers()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+
+  <div class='lineSpacing'>
+    <p>Enable Hands</p>
+    <label class="switch" >
+      <input id="Hands_Switch" type="checkbox" href='javascript:;' onclick="toggle_Hands()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+</body>
+<script src="../preload/settings.js"></script>
+</html>
