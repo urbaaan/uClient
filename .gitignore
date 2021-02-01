@@ -1,0 +1,5 @@
+node_modules
+.DS_Store
+# I assume the output directory is this, I haven't tried
+dist
+.vscode
