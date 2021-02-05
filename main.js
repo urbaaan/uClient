@@ -127,14 +127,18 @@ class Start {
       }
     })
 
+    if (config.get('RPC')) {
+      this.discord
+        .login({
+          clientId: '769550318148780115'
+        })
+        .catch((error) => console.log(error))
+      console.log('RPC Activated!')
+    }
+
     this.gameWindow.removeMenu()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
     this.gameWindow.loadURL(url)
-    this.setActivity(0)
-
-    ipcMain.on('RPC', (event, json) => {
-      this.setActivity(JSON.parse(json))
-    })
 
     this.registerShortcut()
     this.gameWindow.on('page-title-updated', (event) => event.preventDefault())
@@ -267,17 +271,15 @@ class Start {
     this.discord = new (require('discord-rpc').Client)({
       transport: 'ipc'
     })
-    if (config.get('RPC')) {
-      this.discord
-        .login({
-          clientId: '769550318148780115'
-        })
-        .catch((error) => console.log(error))
-      console.log('RPC Activated!')
-    }
+    this.discord.once('ready', () => {
+      this.set(0)
+      ipcMain.on('RPC', (event, json) => {
+        this.set(JSON.parse(json))
+      })
+    })
   }
 
-  setActivity (value) {
+  set (value) {
     this.discord.setActivity({
       largeImageKey: 'logo',
       largeImageText: value.username || 'uClient',
