@@ -144,13 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.keys(KEYS).forEach((keys) => {
       if (!localStorage.getItem(keys)) {
         localStorage.setItem(keys, KEYS[keys])
-        console.log('Patched' + localStorage.getItem(keys))
+        console.log('Patched ' + localStorage.getItem(keys))
       }
     })
-
-    pc.app.scene.root.findByName('Twitch').element.entity.setLocalPosition(-520, -257, 0)
+    pc.app.scene.root.findByGuid('63e2718e-ce1c-489c-add7-988b7a0d1d75').enabled = false
+    pc.app.scene.root.findByName('Twitch').element.entity.setLocalPosition(-50, -357, 0)
     pc.app.scene.root.findByName('Twitter').enabled = false
-    pc.app.scene.root.findByName('Youtube').enabled = false
+    pc.app.scene.root.findByGuid('58aad250-a3ee-484c-a580-f6dfc9b5c8ad').enabled = false
     pc.app.scene.root.findByGuid('2baa7f22-cb28-4cbb-a175-55b8d4385c6f').enabled = false
     pc.app.scene.root.findByName('Poki').enabled = false
     pc.app.scene.root.findByGuid('63e2718e-ce1c-489c-add7-988b7a0d1d75').enabled = false
