@@ -15,7 +15,6 @@ const config = new (require('electron-store'))()
 
 class Start {
   constructor () {
-    app.commandLine.appendSwitch('disable-http-cache')
     if (!config.get('capFPS')) {
       app.commandLine.appendSwitch('disable-frame-rate-limit')
       app.commandLine.appendSwitch('disable-gpu-vsync')
@@ -127,6 +126,8 @@ class Start {
       }
     })
 
+    this.gameWindow.loadURL(url)
+
     if (config.get('RPC')) {
       this.discord
         .login({
@@ -137,15 +138,11 @@ class Start {
     }
 
     this.gameWindow.removeMenu()
+    this.gameWindow.hide()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
-    this.gameWindow.loadURL(url)
 
     this.registerShortcut()
     this.gameWindow.on('page-title-updated', (event) => event.preventDefault())
-    this.gameWindow.on('ready-to-show', () => {
-      this.gameWindow.show()
-      app.focus()
-    })
     this.gameWindow.on('resize', () => {
       config.set('dimensions.size', this.gameWindow.getBounds())
       config.set('dimensions.fullscreen', this.gameWindow.isFullScreen())
@@ -157,9 +154,13 @@ class Start {
       this.startUpdater()
       this.startSwapper()
       this.createSettings()
+      setTimeout(() => {
+        this.gameWindow.show()
+        app.focus()
+      }, 1e3)
     })
     this.gameWindow.webContents.on('new-window', (event, url) => {
-      if (!url.includes('venge.io')) {
+      if (new URL(url).hostname !== 'venge.io') {
         event.preventDefault()
         shell.openExternal(url)
       }
