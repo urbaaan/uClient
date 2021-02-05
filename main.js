@@ -113,6 +113,21 @@ class Start {
     })
   }
 
+  disableAds () {
+    const filter = {
+      urls: ['https://pubads.g.doubleclick.net/*', 'https://video-ad-stats.googlesyndication.com/*',
+        'https://simage2.pubmatic.com/AdServer/*',
+        'https://pagead2.googlesyndication.com/*',
+        'https://securepubads.g.doubleclick.net/*',
+        'https://googleads.g.doubleclick.net/*',
+        'https://adclick.g.doubleclick.net/*']
+    }
+
+    this.gameWindow.webContents.session.webRequest.onBeforeRequest(filter, function (details, callback) {
+      callback({ cancel: true })
+    })
+  }
+
   createWindow (url) {
     this.gameWindow = new BrowserWindow({
       width: config.get('dimensions.size.width'),
@@ -154,6 +169,7 @@ class Start {
       this.startUpdater()
       this.startSwapper()
       this.createSettings()
+      if (config.get('disableAdvertisements')) this.disableAds()
       setTimeout(() => {
         this.gameWindow.show()
         app.focus()
@@ -246,6 +262,7 @@ class Start {
     const DEFAULT_CONFIG = {
       capFPS: false,
       RPC: true,
+      disableAdvertisements: true,
       disableHands: true,
       ADS: false,
       hitMarkers: true,
