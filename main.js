@@ -138,7 +138,6 @@ class Start {
     }
 
     this.gameWindow.removeMenu()
-    this.gameWindow.hide()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
 
     this.registerShortcut()
@@ -204,6 +203,14 @@ class Start {
       },
       files: {}
     }
+    if (config.get('disableAdvertisements')) {
+      swap.filter.urls = ['https://pubads.g.doubleclick.net/*', 'https://video-ad-stats.googlesyndication.com/*',
+        'https://simage2.pubmatic.com/AdServer/*',
+        'https://pagead2.googlesyndication.com/*',
+        'https://securepubads.g.doubleclick.net/*',
+        'https://googleads.g.doubleclick.net/*',
+        'https://adclick.g.doubleclick.net/*']
+    }
 
     function resourceSwap (directory) {
       readdirSync(directory).forEach((file) => {
@@ -235,7 +242,7 @@ class Start {
             redirectURL:
               swap.files[
                 details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
-              ] || details.url
+              ] || details.url || null
           })
         }
       )
@@ -246,6 +253,7 @@ class Start {
     const DEFAULT_CONFIG = {
       capFPS: false,
       RPC: true,
+      disableAdvertisements: true,
       disableHands: true,
       ADS: false,
       hitMarkers: true,
