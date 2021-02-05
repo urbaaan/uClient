@@ -25,7 +25,7 @@
 }
 
 .switch {
-	float: right;
+	  float: right;
   	position: relative;
   	display: inline-block;
   	width: 60px;
@@ -62,6 +62,12 @@ input:checked + .slider {
   	background-color: #2196F3;
 }
 
+input:checked + .slider:before {
+  -webkit-transform: translateX(32px);
+  -ms-transform: translateX(32px);
+  transform: translateX(32px);
+}
+
 
 </style>
 
@@ -79,6 +85,14 @@ input:checked + .slider {
     <p>Enable Frame Rate Limit Cap*</p>
     <label class="switch" >
       <input id="FPS_Switch" type="checkbox" href='javascript:;' onclick="toggle_FPS_Cap()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+
+  <div class='lineSpacing'>
+    <p>Disable Advertisements*</p>
+    <label class="switch" >
+      <input id="Advertisement_Switch" type="checkbox" href='javascript:;' onclick="toggle_Advertisements()">
       <span class="slider" ></span>
     </label><br>
   </div>
@@ -109,6 +123,13 @@ input:checked + .slider {
     <p>Enable Hands</p>
     <label class="switch" >
       <input id="Hands_Switch" type="checkbox" href='javascript:;' onclick="toggle_Hands()">
+      <span class="slider" ></span>
+    </label><br>
+  </div>
+  <div class='lineSpacing'>
+    <p>Hide Weapon on ADS</p>
+    <label class="switch" >
+      <input id="ADS_Switch" type="checkbox" href='javascript:;' onclick="toggle_ADS()">
       <span class="slider" ></span>
     </label><br>
   </div>
