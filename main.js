@@ -52,9 +52,7 @@ const DEFAULT_CONFIG = {
   }
 }
 const { autoUpdater } = require('electron-updater')
-const config = new (require('electron-store'))({
-  defaults: DEFAULT_CONFIG
-})
+const config = new (require('electron-store'))()
 
 Object.keys(DEFAULT_CONFIG).forEach((keys) => {
   if (!config.get(keys)) {
