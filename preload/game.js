@@ -24,6 +24,19 @@ document.addEventListener('DOMContentLoaded', () => {
     pc.controls.player.characterArmLeft.enabled = JSON.parse(Utils.getItem('DisableHands'))
   })
 
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      try {
+        pc.app.mouse.disablePointerLock()
+      } catch (error) { console.log(error) }
+    }
+    if (event.key === 'F3') {
+      try {
+        Utils.copyToClipboard(window.location.href)
+        pc.app.fire('Chat:Message', 'uClient', 'Link copied!')
+      } catch {}
+    }
+  })
   ipcRenderer.on('setEndGameMessage', (event, message) => {
     console.log(message)
     Utils.setItem('endGameMessage', message)
@@ -80,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
     RPC = {
       mode: 'Playing ' + pc.currentMode.charAt(0) + pc.currentMode.toLowerCase().slice(1) || 'Playing Venge.io',
       time: (Number.parseInt(pc.controls.interfaceEntity.script.overlay.timeEntity.element.text.split(':')[0]) * 60000) + (Number.parseInt(pc.controls.interfaceEntity.script.overlay.timeEntity.element.text.split(':')[1]) * 1000) || Number.parseInt(pc.controls.interfaceEntity.script.overlay.timeEntity.element.text) || 0,
-      username: Utils.cleanUsername(pc.session.username) || 'uClient'
+      username: Utils.cleanUsername(pc.session.username || 'uClient'),
+      map: 'on ' + pc.currentMap || null
     }
     console.log(JSON.stringify(RPC))
     ipcRenderer.send('RPC', JSON.stringify(RPC))
