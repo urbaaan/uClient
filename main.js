@@ -43,15 +43,13 @@ class Start {
       this.gameWindow.loadURL('https://venge.io')
     })
     this.shortcut.register(this.gameWindow, 'F2', () => {
-      if (
-        new URL(clipboard.readText()).hostname === 'venge.io' &&
-        new URL(clipboard.readText()).pathname.charAt(0) === '#'
-      ) {
-        console.log(clipboard.readText())
-        this.gameWindow.loadURL(clipboard.readText())
-      } else {
-        getLink()
-      }
+      if (typeof clipboard.readText() === 'string') {
+        if (clipboard.readText().split('#').length > 0 && clipboard.readText().includes('http')) {
+          this.gameWindow.loadURL(clipboard.readText())
+        } else {
+          getLink()
+        }
+      } else getLink()
 
       function getLink () {
         (require('electron-prompt'))({
@@ -81,14 +79,6 @@ class Start {
         })
       }
     })
-    this.shortcut.register(this.gameWindow, 'F3', () => {
-      this.gameWindow.webContents
-        .executeJavaScript(
-          'pc.app.fire("Chat:Message", "uClient", "Link copied!");'
-        )
-        .then(() => clipboard.writeText(this.gameWindow.webContents.getURL()))
-        .catch((error) => console.log(error))
-    })
     this.shortcut.register(this.gameWindow, 'F11', () => {
       this.gameWindow.setSimpleFullScreen(!this.gameWindow.isSimpleFullScreen())
     })
@@ -102,11 +92,6 @@ class Start {
     })
     this.shortcut.register('F10', () => {
       this.gameWindow.minimize(!this.gameWindow.isMinimized())
-    })
-    this.shortcut.register(this.gameWindow, 'Esc', () => {
-      this.gameWindow.webContents.executeJavaScript(
-        'document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;document.exitPointerLock();'
-      )
     })
     this.shortcut.register('Alt+F4', () => {
       app.quit()
@@ -232,11 +217,6 @@ class Start {
       this.gameWindow.webContents.session.webRequest.onBeforeRequest(
         swap.filter,
         (details, callback) => {
-          console.log(
-            swap.files[
-              details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
-            ]
-          )
           callback({
             cancel: false,
             redirectURL:
