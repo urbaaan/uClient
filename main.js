@@ -217,13 +217,16 @@ class Start {
       this.gameWindow.webContents.session.webRequest.onBeforeRequest(
         swap.filter,
         (details, callback) => {
-          callback({
-            cancel: false,
-            redirectURL:
-              swap.files[
-                details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
-              ] || details.url || null
-          })
+          if (details.url.includes('venge.io')) {
+            callback({
+              cancel: false,
+              redirectURL:
+                swap.files[
+                  details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
+                ] || details.url 
+            })
+          }
+          else callback({ cancel: true })
         }
       )
     }
@@ -250,7 +253,8 @@ class Start {
     }
 
     Object.keys(DEFAULT_CONFIG).forEach((keys) => {
-      if (!config.get(keys)) {
+      if (config.get(keys) === null) {
+        console.log('Patched ' + keys)
         config.set(keys, DEFAULT_CONFIG[keys])
       }
     })
