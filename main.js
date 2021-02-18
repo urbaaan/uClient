@@ -147,13 +147,13 @@ class Start {
     const { autoUpdater } = require('electron-updater')
     autoUpdater.checkForUpdatesAndNotify()
 
-    autoUpdater.once('update-available', () => {
+    autoUpdater.on('update-available', () => {
       this.gameWindow.webContents.executeJavaScript(
         'alert("Update is available and will be installed in the background.")'
       )
     })
 
-    autoUpdater.once('update-downloaded', () => {
+    autoUpdater.on('update-downloaded', () => {
       this.gameWindow.webContents
         .executeJavaScript('alert("The latest update will be installed now.")')
         .then(() => autoUpdater.quitAndInstall())
