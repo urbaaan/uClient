@@ -30,7 +30,7 @@ class Start {
         })
         if (app.requestSingleInstanceLock()) {
           this.startConfig()
-          this.startRPC()
+          if (config.get('RPC')) this.startRPC()
           this.createWindow('https://venge.io')
         } else console.log('ERROR: More than one Application opened...')
       })
@@ -113,19 +113,13 @@ class Start {
 
     this.gameWindow.loadURL(url)
 
-    if (config.get('RPC')) {
-      this.discord
-        .login({
-          clientId: '769550318148780115'
-        })
-        .catch((error) => console.log(error))
-      console.log('RPC Activated!')
-    }
-
     this.gameWindow.removeMenu()
+    config.get('dimensions.maximised') ? this.gameWindow.maximize() : this.gameWindow.minimize()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
 
-    this.registerShortcut()
+      this.registerShortcut()
+    this.startSwapper()
+      this.createSettings()
     this.gameWindow.on('page-title-updated', (event) => event.preventDefault())
     this.gameWindow.on('resize', () => {
       config.set('dimensions.size', this.gameWindow.getBounds())
@@ -136,8 +130,6 @@ class Start {
     this.gameWindow.webContents.on('will-prevent-unload', (event) => event.preventDefault())
     this.gameWindow.webContents.on('dom-ready', () => {
       this.startUpdater()
-      this.startSwapper()
-      this.createSettings()
       setTimeout(() => {
         this.gameWindow.show()
         app.focus()
@@ -264,6 +256,14 @@ class Start {
     this.discord = new (require('discord-rpc').Client)({
       transport: 'ipc'
     })
+
+    this.discord
+    .login({
+        clientId: '769550318148780115'
+    })
+    .catch((error) => console.log(error))
+
+
     this.discord.once('ready', () => {
       this.set(0)
       ipcMain.on('RPC', (event, json) => {
