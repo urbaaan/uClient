@@ -112,11 +112,14 @@ class Start {
     })
 
     this.gameWindow.loadURL(url)
+
     this.gameWindow.removeMenu()
+    config.get('dimensions.maximised') ? this.gameWindow.maximize() : this.gameWindow.minimize()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
 
-    this.registerShortcut()
-    this.createSettings()
+      this.registerShortcut()
+    this.startSwapper()
+      this.createSettings()
     this.gameWindow.on('page-title-updated', (event) => event.preventDefault())
     this.gameWindow.on('resize', () => {
       config.set('dimensions.size', this.gameWindow.getBounds())
@@ -127,7 +130,6 @@ class Start {
     this.gameWindow.webContents.on('will-prevent-unload', (event) => event.preventDefault())
     this.gameWindow.webContents.on('dom-ready', () => {
       this.startUpdater()
-      this.startSwapper()
       setTimeout(() => {
         this.gameWindow.show()
         app.focus()
@@ -207,13 +209,16 @@ class Start {
       this.gameWindow.webContents.session.webRequest.onBeforeRequest(
         swap.filter,
         (details, callback) => {
-          callback({
-            cancel: false,
-            redirectURL:
-              swap.files[
-                details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
-              ] || details.url || null
-          })
+          if (details.url.includes('venge.io')) {
+            callback({
+              cancel: false,
+              redirectURL:
+                swap.files[
+                  details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
+                ] || details.url 
+            })
+          }
+          else callback({ cancel: true })
         }
       )
     }
@@ -240,7 +245,8 @@ class Start {
     }
 
     Object.keys(DEFAULT_CONFIG).forEach((keys) => {
-      if (!config.get(keys)) {
+      if (config.get(keys) === null) {
+        console.log('Patched ' + keys)
         config.set(keys, DEFAULT_CONFIG[keys])
       }
     })
@@ -252,12 +258,12 @@ class Start {
     })
 
     this.discord
-      .login({
+    .login({
         clientId: '769550318148780115'
-      })
-      .catch((error) => console.log(error))
-    console.log('RPC Activated!')
-  
+    })
+    .catch((error) => console.log(error))
+
+
     this.discord.once('ready', () => {
       this.set(0)
       ipcMain.on('RPC', (event, json) => {
