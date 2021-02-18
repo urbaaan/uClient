@@ -30,7 +30,7 @@ class Start {
         })
         if (app.requestSingleInstanceLock()) {
           this.startConfig()
-          this.startRPC()
+          if (config.get('RPC')) this.startRPC()
           this.createWindow('https://venge.io')
         } else console.log('ERROR: More than one Application opened...')
       })
@@ -112,20 +112,11 @@ class Start {
     })
 
     this.gameWindow.loadURL(url)
-
-    if (config.get('RPC')) {
-      this.discord
-        .login({
-          clientId: '769550318148780115'
-        })
-        .catch((error) => console.log(error))
-      console.log('RPC Activated!')
-    }
-
     this.gameWindow.removeMenu()
     this.gameWindow.maximize(config.get('dimensions.maximised'))
 
     this.registerShortcut()
+    this.createSettings()
     this.gameWindow.on('page-title-updated', (event) => event.preventDefault())
     this.gameWindow.on('resize', () => {
       config.set('dimensions.size', this.gameWindow.getBounds())
@@ -137,7 +128,6 @@ class Start {
     this.gameWindow.webContents.on('dom-ready', () => {
       this.startUpdater()
       this.startSwapper()
-      this.createSettings()
       setTimeout(() => {
         this.gameWindow.show()
         app.focus()
@@ -217,16 +207,13 @@ class Start {
       this.gameWindow.webContents.session.webRequest.onBeforeRequest(
         swap.filter,
         (details, callback) => {
-          if (details.url.includes('venge.io')) {
-            callback({
-              cancel: false,
-              redirectURL:
-                swap.files[
-                  details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
-                ] || details.url 
-            })
-          }
-          else callback({ cancel: true })
+          callback({
+            cancel: false,
+            redirectURL:
+              swap.files[
+                details.url.replace(/https|http|(\?.*)|(#.*)|(?<=:\/\/)/gi, '')
+              ] || details.url || null
+          })
         }
       )
     }
@@ -253,8 +240,7 @@ class Start {
     }
 
     Object.keys(DEFAULT_CONFIG).forEach((keys) => {
-      if (config.get(keys) === null) {
-        console.log('Patched ' + keys)
+      if (!config.get(keys)) {
         config.set(keys, DEFAULT_CONFIG[keys])
       }
     })
@@ -264,6 +250,14 @@ class Start {
     this.discord = new (require('discord-rpc').Client)({
       transport: 'ipc'
     })
+
+    this.discord
+      .login({
+        clientId: '769550318148780115'
+      })
+      .catch((error) => console.log(error))
+    console.log('RPC Activated!')
+  
     this.discord.once('ready', () => {
       this.set(0)
       ipcMain.on('RPC', (event, json) => {
