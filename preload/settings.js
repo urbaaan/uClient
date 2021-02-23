@@ -7,15 +7,16 @@ function createUI () {
   document.getElementById('FPS_Switch').checked = config.get('capFPS')
   document.getElementById('RPC_Switch').checked = config.get('RPC')
   document.getElementById('HitMarkers_Switch').checked = config.get('hitMarkers')
-  document.getElementById('Hands_Switch').checked = config.get('disableHands')
+  document.getElementById('Hands_Switch').checked = config.get('hands')
   document.getElementById('ADS_Switch').checked = config.get('ADS')
   document.getElementById('Advertisement_Switch').checked = config.get('disableAdvertisements')
+  document.getElementById('mod').value = config.get('Mod')
 }
 
 // It is probably possible to create all the elements via JavaScript, but I'm too lazy.
 function toggle_ADS() {
   config.set('ADS', !config.get('ADS'))
-  remote.getCurrentWindow().getParentWindow().webContents.send('ADS', config.get('ADS'))
+  remote.getCurrentWindow().getParentWindow().webContents.send('event', 'ADS', config.get('ADS'))
 }
 
 function toggle_Advertisements() {
@@ -31,13 +32,17 @@ function toggle_RPC () {
 }
 
 function toggle_Hands () {
-  config.set('disableHands', !config.get('disableHands'))
-  remote.getCurrentWindow().getParentWindow().webContents.send('hands', config.get('disableHands'))
+  config.set('hands', !config.get('hands'))
+  remote.getCurrentWindow().getParentWindow().webContents.send('event', 'HANDS', config.get('hands'))
 }
 
 function toggle_HitMarkers () {
   config.set('hitMarkers', !config.get('hitMarkers'))
-  remote.getCurrentWindow().getParentWindow().webContents.send('hitMarkers', config.get('hitMarkers'))
+  remote.getCurrentWindow().getParentWindow().webContents.send('event', 'HITMARKERS', config.get('hitMarkers'))
 }
 
+function toggle_Mods() {
+  config.set('Mod', document.getElementById('mod').value)
+  remote.getCurrentWindow().getParentWindow().webContents.send('event','MOD',config.get('Mod'))
+}
 createUI()
