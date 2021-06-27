@@ -3,23 +3,11 @@ const { ipcRenderer } = require('electron')
 window.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_STORAGE = {
         ADS: false,
-        MOD: 'uClient-Default.js',
         HANDS: false,
         HITMARKER: true
     }
 
     Object.keys(DEFAULT_STORAGE).forEach((keys) => (localStorage.getItem(keys) === null) ? localStorage.setItem(keys, DEFAULT_STORAGE[keys]) : 0)
-    const req = new XMLHttpRequest();
-    req.open('GET', 'https://raw.githubusercontent.com/urbaaan/uClient/main/mods/' + localStorage.getItem('MOD'), true)
-    req.send()
-
-    req.onreadystatechange = function () {
-        if (req.readyState === req.DONE) {
-            const script = document.createElement('script')
-            script.appendChild(document.createTextNode(req.responseText))
-            document.head.appendChild(script)
-        }
-    }
 
     ipcRenderer.on('event', (event, change, bool) => {
         Utils.setItem(change, bool)
