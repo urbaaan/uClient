@@ -41,8 +41,4 @@ function toggle_HitMarkers () {
   remote.getCurrentWindow().getParentWindow().webContents.send('event', 'HITMARKERS', config.get('hitMarkers'))
 }
 
-function toggle_Mods() {
-  config.set('Mod', document.getElementById('mod').value)
-  remote.getCurrentWindow().getParentWindow().webContents.send('event','MOD',config.get('Mod'))
-}
 createUI()
