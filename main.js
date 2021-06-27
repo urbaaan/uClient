@@ -22,7 +22,6 @@ const STORE_CONFIG = {
     hands: false,
     ADS: false,
     hitMarkers: true,
-    Mod: 'uClient-Default.js'
 }
 
 Object.keys(STORE_CONFIG).forEach((keys) => (!store.get(keys) && store.get(keys) !== false) ? store.set(keys, STORE_CONFIG[keys]) : console.log('VALUE ALREADY EXISTS'))
