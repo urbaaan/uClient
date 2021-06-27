@@ -6,10 +6,6 @@ const {
 } = require('electron')
 
 document.addEventListener('DOMContentLoaded', () => {
-  // pc.controls.player.entity.parent.findByGuid("13c7bc23-c999-47d0-8da3-30a6f44b6a99").script.networkManager.players[0] //Network manager
-  // setInterval(() => {
-  //    pc.app.fire("Fetcher:Reward", !0)
-  // },60);
 
   let RPC = {
     mode: 'string',
